@@ -80,9 +80,7 @@ export function getBuiltInModelInfos(): LanguageModelChatInformation[] {
     const infos: LanguageModelChatInformation[] = [];
 
     for (const def of BUILT_IN_MODELS) {
-        const contextLen = def.contextLength ?? DEFAULT_CONTEXT_LENGTH;
-        const maxOutput = def.maxTokens ?? DEFAULT_MAX_TOKENS;
-        const maxInput = contextLen;
+        const maxInput = def.contextLength ?? DEFAULT_CONTEXT_LENGTH;
 
         const info: LanguageModelChatInformation = {
             id: def.baseId,
@@ -92,7 +90,7 @@ export function getBuiltInModelInfos(): LanguageModelChatInformation[] {
             family: EXTENSION_LABEL,
             version: "1.0.0",
             maxInputTokens: maxInput,
-            maxOutputTokens: maxOutput,
+            maxOutputTokens: 0,
             capabilities: {
                 toolCalling: true,
                 imageInput: def.vision,
