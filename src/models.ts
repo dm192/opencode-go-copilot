@@ -117,25 +117,26 @@ export function getBuiltInModelInfos(): LanguageModelChatInformation[] {
         }
 
         // Map effort values to localized labels and descriptions
+        // Keys are English strings that serve as fallback for non-Chinese locales
         const getLabel = (e: string): string => {
             switch (e) {
-                case 'disabled': return l10n("reasoning.disabled");
-                case 'enabled': return l10n("reasoning.enabled");
-                case 'low': return l10n("reasoning.low");
-                case 'medium': return l10n("reasoning.medium");
-                case 'high': return l10n("reasoning.high");
-                case 'max': return l10n("reasoning.max");
+                case 'disabled': return l10n("Disabled");
+                case 'enabled': return l10n("Thinking");
+                case 'low': return l10n("Low");
+                case 'medium': return l10n("Medium");
+                case 'high': return l10n("High");
+                case 'max': return l10n("Maximum");
                 default: return e.charAt(0).toUpperCase() + e.slice(1);
             }
         };
         const getDesc = (e: string): string => {
             switch (e) {
-                case 'disabled': return l10n("reasoning.disabled.desc");
-                case 'enabled': return l10n("reasoning.enabled.desc");
-                case 'low': return l10n("reasoning.low.desc");
-                case 'medium': return l10n("reasoning.medium.desc");
-                case 'high': return l10n("reasoning.high.desc");
-                case 'max': return l10n("reasoning.max.desc");
+                case 'disabled': return l10n("Do not enable thinking");
+                case 'enabled': return l10n("Enable thinking");
+                case 'low': return l10n("Reduce thinking, faster response");
+                case 'medium': return l10n("Balance thinking and speed");
+                case 'high': return l10n("Deeper thinking, slower response");
+                case 'max': return l10n("Maximum thinking depth, slowest response");
                 default: return e;
             }
         };
@@ -155,7 +156,7 @@ export function getBuiltInModelInfos(): LanguageModelChatInformation[] {
                 properties: {
                     reasoningEffort: {
                         type: 'string',
-                        title: l10n("reasoning.effort.title"),
+                        title: l10n("Reasoning Effort"),
                         enum: enumValues,
                         enumItemLabels: enumItemLabels,
                         enumDescriptions: enumDescriptions,

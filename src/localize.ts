@@ -37,24 +37,24 @@ const zhCN: Record<string, string> = {
 	"The connection was closed by the server. The generation took too long. Please try again or request shorter content.":
 		"服务端连接被关闭，生成内容过长时间过长。请重试或请求较短的内容。",
 
-	// reasoning effort labels
-	"reasoning.disabled": "禁用思考",
-	"reasoning.enabled": "思考",
-	"reasoning.low": "低",
-	"reasoning.medium": "中",
-	"reasoning.high": "高",
-	"reasoning.max": "极高",
+	// reasoning effort labels (keys are English fallback text)
+	"Disabled": "禁用思考",
+	"Thinking": "思考",
+	"Low": "低",
+	"Medium": "中",
+	"High": "高",
+	"Maximum": "极高",
 
-	// reasoning effort descriptions
-	"reasoning.disabled.desc": "不启用思考",
-	"reasoning.enabled.desc": "启用思考",
-	"reasoning.low.desc": "减少思考，响应更快",
-	"reasoning.medium.desc": "平衡思考与速度",
-	"reasoning.high.desc": "更深入的思考，但速度较慢",
-	"reasoning.max.desc": "最大思考深度，速度最慢",
+	// reasoning effort descriptions (keys are English fallback text)
+	"Do not enable thinking": "不启用思考",
+	"Enable thinking": "启用思考",
+	"Reduce thinking, faster response": "减少思考，响应更快",
+	"Balance thinking and speed": "平衡思考与速度",
+	"Deeper thinking, slower response": "更深入的思考，但速度较慢",
+	"Maximum thinking depth, slowest response": "最大思考深度，速度最慢",
 
-	// reasoning effort title
-	"reasoning.effort.title": "推理强度",
+	// reasoning effort title (key is English fallback text)
+	"Reasoning Effort": "推理强度",
 };
 
 /**

@@ -52,7 +52,7 @@ Available in `settings.json`:
 | `opencodego.recentCommitsCount` | `10` | Number of recent commits to analyze for style reference when generating commit messages. Set to 0 to disable. |
 
 > All requests use `temperature: 0` for deterministic output.  
-> All models feature a **Reasoning Effort** selector in the model picker. Switchable models offer `Non-thinking`/`Thinking` or `Non-thinking`/`High`/`Maximum` options (e.g., DeepSeek). Models with always-on reasoning show only effort levels or `Thinking`.
+> Models with switchable thinking provide Disabled/Thinking or Disabled/High/Maximum options in the Reasoning Effort panel (e.g., DeepSeek).
 
 ### Build
 
@@ -116,7 +116,7 @@ MIT License. This project references code from [oai-compatible-copilot](https://
 | `opencodego.recentCommitsCount` | `10` | 生成提交消息时参考的近期提交数量，用于学习仓库提交风格。设为 0 可禁用。 |
 
 > 所有请求使用 `temperature: 0` 以确保输出确定性。  
-> 所有模型均配备**推理强度选择器**。支持切换的模型提供`禁用思考`/`思考`或`非思考`/`高`/`极高`选项（如 DeepSeek）。推理始终启用（不支持切换思考模式）的模型仅显示强度选项或`思考`。
+> 支持切换思考模式的模型在推理强度面板中提供`禁用思考`/`思考`或`禁用思考`/`高`/`极高`选项（如 DeepSeek）。
 
 ### 编译
 
