@@ -52,7 +52,22 @@ Available in `settings.json`:
 | `opencodego.recentCommitsCount` | `10` | Number of recent commits to analyze for style reference when generating commit messages. Set to 0 to disable. |
 
 > All requests use `temperature: 0` for deterministic output.  
-> Models with switchable thinking provide Disabled/Thinking or Disabled/High/Maximum options in the Reasoning Effort panel (e.g., DeepSeek).
+> Models with switchable thinking (e.g., DeepSeek, Qwen) provide reasoning effort levels such as Disabled/High/Maximum.
+
+> **VS Code 1.120+**: To configure thinking effort for a model:
+> 1. Click the model name in the Chat model picker to open the dropdown
+> 2. Click the **gear icon** ⚙️ to the right of the model name
+> 3. Select the desired **Thinking Effort** level
+>
+> The current effort level is shown next to the model name in the picker button (e.g., "DeepSeek V4 Pro · High"). Directly clicking the label text is not supported — use the gear icon submenu instead.
+>
+> You can also set a permanent default via VS Code's language model configuration file (`.vscode/languageModelConfiguration.json`):
+> ```json
+> {
+>   "opencodego.deepseek-v4-pro.reasoningEffort": "max",
+>   "opencodego.deepseek-v4-flash.reasoningEffort": "disabled"
+> }
+> ```
 
 ### Build
 
@@ -116,7 +131,22 @@ MIT License. This project references code from [oai-compatible-copilot](https://
 | `opencodego.recentCommitsCount` | `10` | 生成提交消息时参考的近期提交数量，用于学习仓库提交风格。设为 0 可禁用。 |
 
 > 所有请求使用 `temperature: 0` 以确保输出确定性。  
-> 支持切换思考模式的模型在推理强度面板中提供`禁用思考`/`思考`或`禁用思考`/`高`/`极高`选项（如 DeepSeek）。
+> 支持切换思考模式的模型（如 DeepSeek、Qwen）提供`禁用思考`/`高`/`极高`等推理强度选项。
+
+> **VS Code 1.120+**: 如需修改模型的推理强度：
+> 1. 点击 Chat 底部模型选择器中的模型名称，打开下拉菜单
+> 2. 点击模型名称右侧的**齿轮图标** ⚙️
+> 3. 选择需要的**推理强度**级别
+>
+> 当前强度级别会显示在模型选择器按钮中（如 "DeepSeek V4 Pro · 极高"），但该文本仅为标签，无法直接点击修改，请使用齿轮图标子菜单。
+>
+> 也可以通过 VS Code 的语言模型配置文件（`.vscode/languageModelConfiguration.json`）设置永久默认值：
+> ```json
+> {
+>   "opencodego.deepseek-v4-pro.reasoningEffort": "max",
+>   "opencodego.deepseek-v4-flash.reasoningEffort": "disabled"
+> }
+> ```
 
 ### 编译
 
