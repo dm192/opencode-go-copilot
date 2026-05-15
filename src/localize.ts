@@ -55,6 +55,26 @@ const zhCN: Record<string, string> = {
 
 	// reasoning effort title (key is English fallback text)
 	"Reasoning Effort": "推理强度",
+
+	// extension.ts - model preset (setModelPreset command)
+	"Custom (manual input)": "自定义 (手动输入)",
+	" (current)": " (当前)",
+	"(current, temperature: {0}, top_p: {1})": "(当前, 温度: {0}, top_p: {1})",
+	"Set Model Preset": "设置模型预设",
+	"Select a preset": "选择一个档位",
+	"Enter custom temperature": "输入自定义温度",
+	"Enter a single number for temperature only (<=2), or two comma-separated numbers for temperature and top_p (temp<=2, top_p<=1), e.g.: 0.7 or 0.7,0.95": "输入一个数字只设温度 (<=2), 输入两个数字用英文逗号分隔同时设温度和 top_p (温度<=2, top_p<=1), 如: 0.7 或 0.7,0.95",
+	"Please enter at least temperature value": "请至少输入一个温度值",
+	"Please enter at most two numbers separated by a comma": "最多输入两个数值, 用英文逗号分隔",
+	"Temperature must be between 0.0 and 2.0": "温度必须在 0.0 到 2.0 之间",
+	"top_p must be between 0.0 and 1.0": "top_p 必须在 0.0 到 1.0 之间",
+	"Precise": "精确",
+	"Balanced": "均衡",
+	"Creative": "创意",
+	"Extra Creative": "极具创意",
+	"Set to temperature: {0} ({1})": "已设为温度 {0} ({1})",
+	"Set to temperature: {0} (custom)": "已设为温度 {0} (自定义)",
+	"Set to temp: {0}, top_p: {1} (custom)": "已设为温度 {0}, top_p {1} (自定义)",
 };
 
 /**
@@ -63,8 +83,10 @@ const zhCN: Record<string, string> = {
  */
 export function l10n(key: string): string {
 	const language = vscode.env.language;
-	if (zhCN[key] && (language.toLowerCase() === "zh-cn" || language.toLowerCase().startsWith("zh"))) {
-		return zhCN[key];
+	if (language.toLowerCase() === "zh-cn" || language.toLowerCase().startsWith("zh")) {
+		if (zhCN[key]) {
+			return zhCN[key];
+		}
 	}
 	return key;
 }

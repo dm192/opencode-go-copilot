@@ -12,7 +12,7 @@ import {
 
 import * as path from "path";
 
-import type { OpenCodeGoModelItem } from "./types";
+import type { ModelPreset, OpenCodeGoModelItem } from "./types";
 
 import { createRetryConfig, executeWithRetry } from "./utils";
 
@@ -134,6 +134,30 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
                         if (effort !== 'enabled') {
                             um.reasoning_effort = effort;
                         }
+                    }
+                }
+            }
+
+            // Inject temperature & top_p from model preset or custom settings
+            if (um) {
+                const tempPreset = config.get<string>("opencodego.modelPreset", "custom");
+                if (tempPreset !== "custom") {
+                    const presets = config.get<ModelPreset[]>("opencodego.modelPresets", []);
+                    const matchedPreset = presets.find((p) => p.id === tempPreset);
+                    if (matchedPreset) {
+                        um.temperature = matchedPreset.temperature;
+                    }
+                } else {
+                    const userTemperature = config.get<number | null>("opencodego.temperature", null);
+                    if (userTemperature !== null) {
+                        um.temperature = userTemperature;
+                    }
+                    const userTopP = config.get<number | null>("opencodego.top_p", null);
+                    if (userTopP !== null) {
+                        um.top_p = userTopP;
+                    } else {
+                        // Keep top_p undefined so the model uses its default
+                        um.top_p = undefined;
                     }
                 }
             }

@@ -73,6 +73,16 @@ export interface ModelItem {
 }
 
 /**
+ * A model preset for temperature and top_p configuration.
+ */
+export interface ModelPreset {
+    id: string;
+    label: string;
+    temperature: number;
+    top_p: number;
+}
+
+/**
  * Retry configuration.
  */
 export interface RetryConfig {
