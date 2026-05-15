@@ -66,6 +66,9 @@ const zhCN: Record<string, string> = {
 	"Please enter two numbers separated by a comma": "请输入两个数值，用英文逗号分隔",
 	"Temperature must be between 0.0 and 2.0": "温度必须在 0.0 到 2.0 之间",
 	"top_p must be between 0.0 and 1.0": "top_p 必须在 0.0 到 1.0 之间",
+	"Precise": "精确",
+	"Balanced": "均衡",
+	"Creative": "创意",
 	"Set to temp: {0}, top_p: {1} ({2})": "已设为 温度 {0}，top_p {1}（{2}）",
 	"Set to temp: {0}, top_p: {1} (custom)": "已设为 温度 {0}，top_p {1}（自定义）",
 };

@@ -71,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             const presetItems: PresetQuickPickItem[] = presets.map((p) => ({
-                label: `${p.label}（${p.temperature}, ${p.top_p !== undefined ? p.top_p : "—"}）`,
+                label: `${l10n(p.label)}（${p.temperature}, ${p.top_p !== undefined ? p.top_p : "—"}）`,
                 presetId: p.id,
             }));
 
@@ -111,7 +111,7 @@ export function activate(context: vscode.ExtensionContext) {
                     await config.update("opencodego.temperature", matchedPreset.temperature, vscode.ConfigurationTarget.Global);
                     await config.update("opencodego.top_p", matchedPreset.top_p, vscode.ConfigurationTarget.Global);
                     vscode.window.showInformationMessage(
-                        l10nFormat("Set to temp: {0}, top_p: {1} ({2})", String(matchedPreset.temperature), String(matchedPreset.top_p), matchedPreset.label)
+                        l10nFormat("Set to temp: {0}, top_p: {1} ({2})", String(matchedPreset.temperature), String(matchedPreset.top_p), l10n(matchedPreset.label))
                     );
                 }
             } else {
