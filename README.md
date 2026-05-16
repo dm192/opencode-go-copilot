@@ -14,8 +14,14 @@ Integrate [OpenCode Go](https://opencode.ai/go) models into GitHub Copilot Chat 
 
 1. **Set API Key**: `Ctrl+Shift+P` → `OpenCodeGo: Set OpenCode Go API Key`
 2. **Show Models**: Click the settings icon ⚙️ in the model picker → **Language Models** panel → set your desired models to Visible
-3. **Select Model**: In the Copilot Chat bottom model picker, choose an "OpenCode Go" model
+3. **Select Model**: In the Copilot Chat bottom model picker, choose an "OpenCode Go" or "OpenCode Zen" model
 4. **Start chatting**
+
+### OpenCode Zen Free Models
+
+Enable via `opencodego.enableZenFreeModels` setting (default off). When enabled, 5 free models (Big Pickle, DeepSeek V4 Flash, MiniMax M2.5, Ring 2.6 1T, Nemotron 3 Super) fetched from the Zen API are added to the model picker with a `Zen/` prefix (e.g. `Zen/DeepSeek V4 Flash Free`). Requires a full reload of VS Code to take effect after changing the setting.
+
+> If a free model is no longer available as free, the extension will display a friendly error prompt asking you to use a different model.
 
 ### Token Usage Indicator
 
@@ -53,6 +59,7 @@ Available in `settings.json`:
 | `opencodego.requestTimeout` | `600000` | Maximum time (ms) for a single API request. Default is 600000 (10 minutes). Increase if long responses time out. |
 | `opencodego.recentCommitsCount` | `10` | Number of recent commits to analyze for style reference when generating commit messages. Set to 0 to disable. |
 | `opencodego.commitIncludeCommitDiff` | `false` | Include the actual code changes (diff) of recent commits in the style reference, helping the model generate messages that better match the project's commit style. |
+| `opencodego.enableZenFreeModels` | `false` | Enable OpenCode Zen free models in the model picker. Zen free models are NOT supported for git commit message generation. Requires a full reload to take effect. |
 | `opencodego.commitAttachContextFiles` | `true` | Attach AGENTS.md and README.md from the repository root as additional context for commit message generation, helping the model better understand the project. |
 
 > All requests use `temperature: 0` for deterministic output.  
@@ -89,8 +96,14 @@ MIT License. This project references code from [oai-compatible-copilot](https://
 
 1. **设置 API Key**：`Ctrl+Shift+P` → `OpenCodeGo: Set OpenCode Go API Key`
 2. **显示模型**：在模型选择器中点击设置图标 ⚙️ → **语言模型** 面板 → 将需要使用的模型显示
-3. **选择模型**：在 Copilot Chat 底部模型选择器中选择 "OpenCode Go" 下的模型
+3. **选择模型**：在 Copilot Chat 底部模型选择器中选择 "OpenCode Go" 或 "OpenCode Zen" 下的模型
 4. **开始对话**
+
+### OpenCode Zen 免费模型
+
+通过 `opencodego.enableZenFreeModels` 设置启用（默认关闭）。开启后，将从 Zen API 获取 5 个免费模型（Big Pickle、DeepSeek V4 Flash、MiniMax M2.5、Ring 2.6 1T、Nemotron 3 Super）并添加到模型选择器中，名称带 `Zen/` 前缀（如 `Zen/DeepSeek V4 Flash Free`）。更改设置后需要重新加载 VS Code 才能生效。
+
+> 如果免费模型已结束免费使用，扩展会显示友好的错误提示，引导你使用其他模型。
 
 ### Token 用量指示器
 
@@ -128,6 +141,7 @@ MIT License. This project references code from [oai-compatible-copilot](https://
 | `opencodego.requestTimeout` | `600000` | 单个 API 请求的最大等待时间（毫秒）。默认 600000（10 分钟）。生成长内容超时时可增大此值。 |
 | `opencodego.recentCommitsCount` | `10` | 生成提交消息时参考的近期提交数量，用于学习仓库提交风格。设为 0 可禁用。 |
 | `opencodego.commitIncludeCommitDiff` | `false` | 在风格参考中包含历史提交的实际代码变更（diff），帮助模型生成更符合项目提交风格的消息。 |
+| `opencodego.enableZenFreeModels` | `false` | 启用 OpenCode Zen 免费模型并添加到模型选择器中。暂不支持用于 Git 提交消息生成。更改后需重载 VS Code 生效。 |
 | `opencodego.commitAttachContextFiles` | `true` | 将仓库根目录的 AGENTS.md 和 README.md 作为额外上下文附加到提交消息生成中，帮助模型更好地理解项目。 |
 
 > 所有请求使用 `temperature: 0` 以确保输出确定性。  
