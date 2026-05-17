@@ -473,12 +473,12 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
             return;
         }
 
-        // Emit thinking progress to indicate image reading
+        // Emit a brief thinking indicator so the user knows something is happening
         params.trackingProgress.report(
-            new vscode.LanguageModelThinkingPart(`🔍 Reading image using ${visionModelId}...`)
+            new vscode.LanguageModelThinkingPart(`🔍 Processing image...`)
         );
 
-        // Call vision model to describe the image
+        // Call vision model to describe the image (result is for internal use only)
         let description: string;
         try {
             description = await callVisionModel(
@@ -494,12 +494,10 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
             description = "[Image Description unavailable]";
         }
 
-        // End thinking, then emit the description as text
+        // End thinking indicator — do NOT emit the raw description to the user.
+        // The description is only for the model (second round via tool_result).
         params.trackingProgress.report(
             new vscode.LanguageModelThinkingPart("", `${Date.now()}_done`)
-        );
-        params.trackingProgress.report(
-            new vscode.LanguageModelTextPart(`[Image Description: ${description}]`)
         );
 
         // Build second-round messages and make another API request
