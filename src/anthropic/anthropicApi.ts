@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import {
 	CancellationToken,
 	LanguageModelChatRequestMessage,
+	LanguageModelResponsePart,
 	ProvideLanguageModelChatResponseOptions,
-	LanguageModelResponsePart2,
 	Progress,
 } from "vscode";
 
@@ -32,6 +32,9 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 
 	/** Whether images were stored during convertMessages for describe_image tool. */
 	private _hasStoredImages = false;
+
+	/** Accumulated input tokens from Anthropic message_start for usage reporting. */
+	private _anthropicInputTokens = 0;
 
 	/**
 	 * Convert VS Code chat messages to Anthropic message format.
@@ -284,7 +287,7 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 	 */
 	async processStreamingResponse(
 		responseBody: ReadableStream<Uint8Array>,
-		progress: Progress<LanguageModelResponsePart2>,
+		progress: Progress<LanguageModelResponsePart>,
 		token: CancellationToken
 	): Promise<void> {
 		const modelId = this._modelId;
@@ -362,7 +365,7 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 	 */
 	private async processAnthropicChunk(
 		chunk: AnthropicStreamChunk,
-		progress: Progress<LanguageModelResponsePart2>
+		progress: Progress<LanguageModelResponsePart>
 	): Promise<void> {
 		// Handle ping events (ignore)
 		if (chunk.type === "ping") {
@@ -378,12 +381,24 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 		}
 
 		if (chunk.type === "message_start" && chunk.message) {
-			// Extract message metadata (id, model, etc.)
+			// Extract message metadata (id, model, etc.) and input token count
+			const msg = chunk.message as Record<string, unknown>;
+			const usage = msg.usage as { input_tokens?: number } | undefined;
+			if (usage?.input_tokens) {
+				this._anthropicInputTokens = usage.input_tokens;
+			}
 			return;
 		}
 
 		if (chunk.type === "message_delta" && chunk.delta) {
 			// Extract stop_reason and usage information
+			const chunkUsage = chunk.usage as { output_tokens?: number } | undefined;
+			if (chunkUsage?.output_tokens && this._anthropicInputTokens > 0) {
+				this._onUsage?.({
+					promptTokens: this._anthropicInputTokens,
+					completionTokens: chunkUsage.output_tokens,
+				});
+			}
 			return;
 		}
 

@@ -4,9 +4,9 @@ import {
     LanguageModelChatInformation,
     LanguageModelChatProvider,
     LanguageModelChatRequestMessage,
+    LanguageModelResponsePart,
     PrepareLanguageModelChatModelOptions,
     ProvideLanguageModelChatResponseOptions,
-    LanguageModelResponsePart2,
     Progress,
 } from "vscode";
 
@@ -25,12 +25,42 @@ import { updateContextStatusBar, recordUsage, updateCumulativeTooltip } from "./
 import { OpenaiApi } from "./openai/openaiApi";
 import { AnthropicApi } from "./anthropic/anthropicApi";
 import type { AnthropicRequestBody } from "./anthropic/anthropicTypes";
-import { CommonApi } from "./commonApi";
+import { CommonApi, type StreamUsage } from "./commonApi";
 import { callVisionModel } from "./vision/imageProxy";
 import { DESCRIBE_IMAGE_TOOL_NAME } from "./vision/types";
 import type { InterceptedToolCall, StoredImage } from "./vision/types";
 import { logger } from "./logger";
 import { l10n } from "./localize";
+
+/**
+ * Native Copilot Token Indicator
+ *
+ * Reports token usage to the Copilot Chat's built-in token indicator by emitting
+ * a LanguageModelDataPart with MIME type 'usage'. Copilot Chat intercepts this
+ * part and displays it in the native UI element, just like GitHub Copilot's own
+ * models do.
+ *
+ * This is always active. The separate Advanced Token indicator can be
+ * controlled via the "opencodego.enableThirdPartyTokenIndicator" setting.
+ */
+function reportNativeUsage(
+    usage: StreamUsage,
+    progress: Progress<LanguageModelResponsePart>
+): void {
+    progress.report(
+        new vscode.LanguageModelDataPart(
+            new TextEncoder().encode(JSON.stringify({
+                prompt_tokens: usage.promptTokens,
+                completion_tokens: usage.completionTokens,
+                total_tokens: usage.promptTokens + usage.completionTokens,
+                prompt_tokens_details: {
+                    cached_tokens: usage.cacheHitTokens ?? 0,
+                },
+            })),
+            'usage'
+        )
+    );
+}
 
 /**
  * VS Code Chat provider backed by OpenCode Go API.
@@ -93,10 +123,10 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
         model: LanguageModelChatInformation,
         messages: readonly LanguageModelChatRequestMessage[],
         options: ProvideLanguageModelChatResponseOptions,
-        progress: Progress<LanguageModelResponsePart2>,
+        progress: Progress<LanguageModelResponsePart>,
         token: CancellationToken
     ): Promise<void> {
-        const trackingProgress: Progress<LanguageModelResponsePart2> = {
+        const trackingProgress: Progress<LanguageModelResponsePart> = {
             report: (part) => {
                 try {
                     progress.report(part);
@@ -187,8 +217,13 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
                 vision: um?.vision ?? false,
             };
 
-            // Update Token Usage
-            updateContextStatusBar(messages, options.tools, model, this.statusBarItem, modelConfig);
+            // Read Advanced Token indicator setting
+            const enableThirdPartyIndicator = config.get<boolean>("opencodego.enableThirdPartyTokenIndicator", true);
+
+            // Update Advanced Token indicator (if enabled)
+            if (enableThirdPartyIndicator) {
+                updateContextStatusBar(messages, options.tools, model, this.statusBarItem, modelConfig);
+            }
 
             // Apply delay between consecutive requests
             const modelDelay = um?.delay;
@@ -250,6 +285,15 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
             if (apiMode === "anthropic") {
                 // Anthropic API mode
                 const anthropicApi = new AnthropicApi(model.id);
+                anthropicApi.onUsage = (usage) => {
+                    // Always report to native Copilot indicator (use original progress, not trackingProgress wrapper)
+                    reportNativeUsage(usage, progress);
+                    // Conditionally update Advanced Token indicator
+                    if (enableThirdPartyIndicator) {
+                        recordUsage(usage);
+                        updateCumulativeTooltip(this.statusBarItem);
+                    }
+                };
                 const anthropicMessages = anthropicApi.convertMessages(messages, modelConfig);
 
                 // requestBody
@@ -312,8 +356,13 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
                 // OpenAI Chat Completions API mode
                 const openaiApi = new OpenaiApi(model.id);
                 openaiApi.onUsage = (usage) => {
-                    recordUsage(usage);
-                    updateCumulativeTooltip(this.statusBarItem);
+                    // Always report to native Copilot indicator (use original progress, not trackingProgress wrapper)
+                    reportNativeUsage(usage, progress);
+                    // Conditionally update Advanced Token indicator
+                    if (enableThirdPartyIndicator) {
+                        recordUsage(usage);
+                        updateCumulativeTooltip(this.statusBarItem);
+                    }
                 };
                 const openaiMessages = openaiApi.convertMessages(messages, modelConfig);
 
@@ -444,7 +493,7 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
         requestHeaders: Record<string, string>;
         retryConfig: ReturnType<typeof createRetryConfig>;
         abortController: AbortController;
-        trackingProgress: Progress<LanguageModelResponsePart2>;
+        trackingProgress: Progress<LanguageModelResponsePart>;
         token: CancellationToken;
     }): Promise<void> {
         const intercepted = params.api.interceptedToolCall;
@@ -476,7 +525,7 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
         // Emit a brief thinking indicator BEFORE reading the image
         const visionThinkId = `vision_${Date.now()}`;
         params.trackingProgress.report(
-            new vscode.LanguageModelThinkingPart(l10n("Reading image..."), visionThinkId)
+            new vscode.LanguageModelThinkingPart(l10n("Reading image..."), visionThinkId) as unknown as LanguageModelResponsePart
         );
 
         // Call vision model to describe the image (result is for internal use only)
@@ -498,10 +547,10 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
         // Append "done" to the thinking block, then close it.
         // The description is only for the model (second round via tool_result).
         params.trackingProgress.report(
-            new vscode.LanguageModelThinkingPart(l10n(" done"), visionThinkId)
+            new vscode.LanguageModelThinkingPart(l10n(" done"), visionThinkId) as unknown as LanguageModelResponsePart
         );
         params.trackingProgress.report(
-            new vscode.LanguageModelThinkingPart("", visionThinkId)
+            new vscode.LanguageModelThinkingPart("", visionThinkId) as unknown as LanguageModelResponsePart
         );
 
         // Build second-round messages and make another API request
