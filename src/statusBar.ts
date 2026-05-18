@@ -52,6 +52,7 @@ export function createProgressBar(usedTokens: number, maxTokens: number): string
  * Update the status bar with token usage information.
  * Resets cumulative counters when a new conversation starts
  * (no assistant messages in the history).
+ * @returns The estimated input token count (for fallback usage).
  */
 export async function updateContextStatusBar(
     messages: readonly LanguageModelChatRequestMessage[],
@@ -59,7 +60,7 @@ export async function updateContextStatusBar(
     model: LanguageModelChatInformation,
     statusBarItem: vscode.StatusBarItem,
     modelConfig: { includeReasoningInRequest: boolean }
-): Promise<void> {
+): Promise<number> {
     try {
         // Detect new conversation: no assistant messages → reset cumulative counters
         const ASSISTANT = vscode.LanguageModelChatMessageRole.Assistant as unknown as number;
@@ -85,9 +86,26 @@ export async function updateContextStatusBar(
         statusBarItem.text = `$(symbol-numeric) ${formattedTokens} ${progressBar}`;
         // Always show cumulative tooltip (not per-request) to avoid flickering
         updateCumulativeTooltip(statusBarItem);
+        return totalTokens;
     } catch {
         statusBarItem.text = "$(symbol-numeric) ?";
+        return 0;
     }
+}
+
+/**
+ * Update the status bar main text using API-reported prompt token count.
+ * Called when API returns usage data, overriding the initial client-side estimate.
+ */
+export function updateStatusBarWithApiPrompt(
+    apiPromptTokens: number,
+    maxTokens: number,
+    statusBarItem: vscode.StatusBarItem
+): void {
+    const progressBar = createProgressBar(apiPromptTokens, maxTokens);
+    const formattedTokens = formatTokenCount(apiPromptTokens);
+    statusBarItem.text = `$(symbol-numeric) ${formattedTokens} ${progressBar}`;
+    updateCumulativeTooltip(statusBarItem);
 }
 
 /**

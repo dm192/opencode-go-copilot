@@ -20,8 +20,8 @@ import { prepareLanguageModelChatInformation } from "./provideModel";
 import { getBuiltInModelConfig } from "./models";
 import { getZenFreeModelConfig } from "./zen/zenModels";
 import { l10nFormat } from "./localize";
-import { countMessageTokens } from "./provideToken";
-import { updateContextStatusBar, recordUsage, updateCumulativeTooltip } from "./statusBar";
+import { countMessageTokens, textTokenLength } from "./provideToken";
+import { updateContextStatusBar, recordUsage, updateCumulativeTooltip, updateStatusBarWithApiPrompt } from "./statusBar";
 import { OpenaiApi } from "./openai/openaiApi";
 import { AnthropicApi } from "./anthropic/anthropicApi";
 import type { AnthropicRequestBody } from "./anthropic/anthropicTypes";
@@ -126,9 +126,14 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
         progress: Progress<LanguageModelResponsePart>,
         token: CancellationToken
     ): Promise<void> {
+        let usageReportedDuringStream = false;
+        const collectedOutputText: string[] = [];
         const trackingProgress: Progress<LanguageModelResponsePart> = {
             report: (part) => {
                 try {
+                    if (part instanceof vscode.LanguageModelTextPart) {
+                        collectedOutputText.push(part.value);
+                    }
                     progress.report(part);
                 } catch (e) {
                     console.error("[OpenCodeGo] Progress.report failed", {
@@ -220,10 +225,8 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
             // Read Advanced Token indicator setting
             const enableThirdPartyIndicator = config.get<boolean>("opencodego.enableThirdPartyTokenIndicator", true);
 
-            // Update Advanced Token indicator (if enabled)
-            if (enableThirdPartyIndicator) {
-                updateContextStatusBar(messages, options.tools, model, this.statusBarItem, modelConfig);
-            }
+            // Calculate client-side token estimate for fallback (also updates Advanced Token indicator if enabled)
+            const estimatedInputTokens = await updateContextStatusBar(messages, options.tools, model, this.statusBarItem, modelConfig);
 
             // Apply delay between consecutive requests
             const modelDelay = um?.delay;
@@ -286,12 +289,14 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
                 // Anthropic API mode
                 const anthropicApi = new AnthropicApi(model.id);
                 anthropicApi.onUsage = (usage) => {
+                    usageReportedDuringStream = true;
                     // Always report to native Copilot indicator (use original progress, not trackingProgress wrapper)
                     reportNativeUsage(usage, progress);
                     // Conditionally update Advanced Token indicator
                     if (enableThirdPartyIndicator) {
                         recordUsage(usage);
                         updateCumulativeTooltip(this.statusBarItem);
+                        updateStatusBarWithApiPrompt(usage.promptTokens, model.maxInputTokens || 128000, this.statusBarItem);
                     }
                 };
                 const anthropicMessages = anthropicApi.convertMessages(messages, modelConfig);
@@ -356,12 +361,14 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
                 // OpenAI Chat Completions API mode
                 const openaiApi = new OpenaiApi(model.id);
                 openaiApi.onUsage = (usage) => {
+                    usageReportedDuringStream = true;
                     // Always report to native Copilot indicator (use original progress, not trackingProgress wrapper)
                     reportNativeUsage(usage, progress);
                     // Conditionally update Advanced Token indicator
                     if (enableThirdPartyIndicator) {
                         recordUsage(usage);
                         updateCumulativeTooltip(this.statusBarItem);
+                        updateStatusBarWithApiPrompt(usage.promptTokens, model.maxInputTokens || 128000, this.statusBarItem);
                     }
                 };
                 const openaiMessages = openaiApi.convertMessages(messages, modelConfig);
@@ -422,6 +429,21 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
 
                 // Clean up stored images
                 openaiApi.cleanupStoredImages();
+            }
+
+            // Fallback: if API did not return usage data, use client-side calculation for native indicator
+            if (!usageReportedDuringStream) {
+                const outputText = collectedOutputText.join("");
+                const estimatedOutputTokens = outputText ? await textTokenLength(outputText) : 0;
+                const fallbackUsage: StreamUsage = {
+                    promptTokens: estimatedInputTokens,
+                    completionTokens: estimatedOutputTokens,
+                };
+                reportNativeUsage(fallbackUsage, progress);
+                if (enableThirdPartyIndicator) {
+                    recordUsage(fallbackUsage);
+                    updateCumulativeTooltip(this.statusBarItem);
+                }
             }
         } catch (err) {
             // Determine if the request was aborted/terminated (friendly message instead of raw error)
