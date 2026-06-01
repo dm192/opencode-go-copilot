@@ -25,6 +25,8 @@ import {
     collectToolResultText,
     convertToolsToOpenAI,
     mapRole,
+    storeDataUriImages,
+    replaceDataUriImages,
 } from "../utils";
 
 import { CommonApi, StreamUsage } from "../commonApi";
@@ -79,9 +81,18 @@ export class OpenaiApi extends CommonApi<OpenAIChatMessage, Record<string, unkno
                                         data: inner.data,
                                         mimeType: inner.mimeType,
                                     });
+                                } else if (inner instanceof vscode.LanguageModelTextPart) {
+                                    // Scan text for base64 data URI images
+                                    if (!imagesToStore) imagesToStore = [];
+                                    storeDataUriImages(inner.value, imagesToStore);
                                 }
                             }
                         }
+                    }
+                    // Scan direct text parts for base64 data URI images
+                    if (part instanceof vscode.LanguageModelTextPart) {
+                        if (!imagesToStore) imagesToStore = [];
+                        storeDataUriImages(part.value, imagesToStore);
                     }
                 }
             }
@@ -103,7 +114,14 @@ export class OpenaiApi extends CommonApi<OpenAIChatMessage, Record<string, unkno
 
             for (const part of m.content ?? []) {
                 if (part instanceof vscode.LanguageModelTextPart) {
-                    textParts.push(part.value);
+                    if (modelSupportsVision) {
+                        textParts.push(part.value);
+                    } else {
+                        // Replace data URI images with references, and track imageIndex
+                        const result = replaceDataUriImages(part.value, imageIndex);
+                        imageIndex += result.count;
+                        textParts.push(result.text);
+                    }
                 } else if (part instanceof vscode.LanguageModelDataPart && isImageMimeType(part.mimeType)) {
                     if (modelSupportsVision) {
                         imageParts.push(part);
@@ -129,7 +147,13 @@ export class OpenaiApi extends CommonApi<OpenAIChatMessage, Record<string, unkno
                     if (toolContent) {
                         for (const inner of toolContent) {
                             if (inner instanceof vscode.LanguageModelTextPart) {
-                                toolTexts.push(inner.value);
+                                if (modelSupportsVision) {
+                                    toolTexts.push(inner.value);
+                                } else {
+                                    const result = replaceDataUriImages(inner.value, imageIndex);
+                                    imageIndex += result.count;
+                                    toolTexts.push(result.text);
+                                }
                             } else if (!modelSupportsVision && inner instanceof vscode.LanguageModelDataPart && isImageMimeType(inner.mimeType)) {
                                 toolTexts.push(`[Image data from previous tool call (imageIndex=${imageIndex})]`);
                                 imageIndex++;

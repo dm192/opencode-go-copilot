@@ -18,7 +18,7 @@ import type {
 	AnthropicStreamChunk,
 } from "./anthropicTypes";
 
-import { isImageMimeType, isToolResultPart, collectToolResultText, convertToolsToOpenAI, mapRole } from "../utils";
+import { isImageMimeType, isToolResultPart, collectToolResultText, convertToolsToOpenAI, mapRole, storeDataUriImages, replaceDataUriImages } from "../utils";
 
 import { CommonApi } from "../commonApi";
 import { logger } from "../logger";
@@ -74,9 +74,18 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 										data: inner.data,
 										mimeType: inner.mimeType,
 									});
+								} else if (inner instanceof vscode.LanguageModelTextPart) {
+									// Scan text for base64 data URI images
+									if (!imagesToStore) imagesToStore = [];
+									storeDataUriImages(inner.value, imagesToStore);
 								}
 							}
 						}
+					}
+					// Scan direct text parts for base64 data URI images
+					if (part instanceof vscode.LanguageModelTextPart) {
+						if (!imagesToStore) imagesToStore = [];
+						storeDataUriImages(part.value, imagesToStore);
 					}
 				}
 			}
@@ -98,7 +107,13 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 
 			for (const part of m.content ?? []) {
 				if (part instanceof vscode.LanguageModelTextPart) {
-					textParts.push(part.value);
+					if (modelSupportsVision) {
+						textParts.push(part.value);
+					} else {
+						const result = replaceDataUriImages(part.value, imageIndex);
+						imageIndex += result.count;
+						textParts.push(result.text);
+					}
 				} else if (part instanceof vscode.LanguageModelDataPart && isImageMimeType(part.mimeType)) {
 					imageParts.push(part);
 				} else if (part instanceof vscode.LanguageModelToolCallPart) {
@@ -116,7 +131,13 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 					if (toolContent) {
 						for (const inner of toolContent) {
 							if (inner instanceof vscode.LanguageModelTextPart) {
-								toolTexts.push(inner.value);
+								if (modelSupportsVision) {
+									toolTexts.push(inner.value);
+								} else {
+									const result = replaceDataUriImages(inner.value, imageIndex);
+									imageIndex += result.count;
+									toolTexts.push(result.text);
+								}
 							} else if (!modelSupportsVision && inner instanceof vscode.LanguageModelDataPart && isImageMimeType(inner.mimeType)) {
 								toolTexts.push(`[Image data from previous tool call (imageIndex=${imageIndex})]`);
 								imageIndex++;

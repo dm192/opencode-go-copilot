@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { OpenCodeGoModelItem, RetryConfig } from "./types";
+import type { StoredImage } from "./vision/types";
 import { OpenAIFunctionToolDef } from "./openai/openaiTypes";
 
 const RETRY_MAX_ATTEMPTS = 3;
@@ -220,6 +221,71 @@ function isRetryableError(error: Error, retryableStatusCodes: number[]): boolean
  */
 export function isImageMimeType(mimeType: string): boolean {
     return mimeType.startsWith("image/");
+}
+
+/**
+ * Regex pattern to match data URI encoded images in text.
+ * Matches: data:image/{format};base64,{base64_data}
+ */
+const DATA_URI_IMAGE_RE = /data:image\/(?:png|jpeg|jpg|gif|webp|bmp);base64,([A-Za-z0-9+/=]+)/g;
+
+/**
+ * Detect base64-encoded data URI images in text, decode and store them.
+ * Used during the image storage pass in convertMessages.
+ * @returns The number of data URI images found and stored.
+ */
+export function storeDataUriImages(text: string, imagesToStore: StoredImage[]): number {
+    let count = 0;
+    DATA_URI_IMAGE_RE.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = DATA_URI_IMAGE_RE.exec(text)) !== null) {
+        const fullMatch = match[0];
+        const base64Data = match[1];
+        count++;
+
+        let mimeType = "image/png";
+        if (fullMatch.startsWith("data:image/jpeg")) mimeType = "image/jpeg";
+        else if (fullMatch.startsWith("data:image/gif")) mimeType = "image/gif";
+        else if (fullMatch.startsWith("data:image/webp")) mimeType = "image/webp";
+        else if (fullMatch.startsWith("data:image/bmp")) mimeType = "image/bmp";
+
+        const binaryStr = atob(base64Data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+        }
+        imagesToStore.push({ data: bytes, mimeType });
+    }
+    return count;
+}
+
+/**
+ * Replace base64-encoded data URI images in text with image index references.
+ * Does NOT store images (they should already be stored by the storage pass).
+ * @param text The text to scan.
+ * @param startIndex The starting imageIndex to assign.
+ * @returns { text: string; count: number } The modified text and number of replacements.
+ */
+export function replaceDataUriImages(text: string, startIndex: number): { text: string; count: number } {
+    let result = text;
+    let offset = 0;
+    let count = 0;
+    let idx = startIndex;
+
+    DATA_URI_IMAGE_RE.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = DATA_URI_IMAGE_RE.exec(text)) !== null) {
+        const fullMatch = match[0];
+        count++;
+        const before = result.slice(0, match.index + offset);
+        const after = result.slice(match.index + offset + fullMatch.length);
+        const replacement = `[Image data from tool call (imageIndex=${idx})]`;
+        result = before + replacement + after;
+        offset += replacement.length - fullMatch.length;
+        idx++;
+    }
+
+    return { text: result, count };
 }
 
 /**
