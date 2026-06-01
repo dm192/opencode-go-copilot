@@ -628,6 +628,19 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
             if (params.um?.temperature !== undefined && params.um.temperature !== null) {
                 secondBody.temperature = params.um.temperature;
             }
+            // Restore system content for second round (extracted by convertMessages)
+            const anthropicSystemContent = (params.api as any)._systemContent as string | undefined;
+            if (anthropicSystemContent) {
+                secondBody.system = anthropicSystemContent;
+            }
+            // Preserve thinking mode for second round (Anthropic-compatible)
+            if (params.um?.enable_thinking === true) {
+                if (params.um?.reasoning_effort === 'adaptive') {
+                    secondBody.thinking = { type: "adaptive" };
+                } else {
+                    secondBody.thinking = { type: "enabled", budget_tokens: 8192 };
+                }
+            }
 
             const secondUrl = params.baseUrl.replace(/\/+$/, "");
             const url = secondUrl.endsWith("/v1")
