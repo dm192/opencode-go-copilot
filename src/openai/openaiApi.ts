@@ -341,10 +341,11 @@ export class OpenaiApi extends CommonApi<OpenAIChatMessage, Record<string, unkno
         const reader = responseBody.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
+        let cancelDisposable: vscode.Disposable | undefined;
 
         // Immediately cancel the stream when user cancels, so reader.read() won't stay pending
         if (token.onCancellationRequested) {
-            token.onCancellationRequested(() => {
+            cancelDisposable = token.onCancellationRequested(() => {
                 reader.cancel().catch(() => {});
             });
         }
@@ -425,6 +426,7 @@ export class OpenaiApi extends CommonApi<OpenAIChatMessage, Record<string, unkno
             logger.error("openai.stream.error", { modelId, error: e instanceof Error ? e.message : String(e) });
             throw e;
         } finally {
+            cancelDisposable?.dispose();
             reader.releaseLock();
             this.reportEndThinking(progress);
         }

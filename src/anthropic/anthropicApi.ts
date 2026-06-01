@@ -334,10 +334,11 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 		const reader = responseBody.getReader();
 		const decoder = new TextDecoder();
 		let buffer = "";
+		let cancelDisposable: vscode.Disposable | undefined;
 
 		// Immediately cancel the stream when user cancels, so reader.read() won't stay pending
 		if (token.onCancellationRequested) {
-			token.onCancellationRequested(() => {
+			cancelDisposable = token.onCancellationRequested(() => {
 				reader.cancel().catch(() => {});
 			});
 		}
@@ -391,6 +392,7 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 			logger.error("anthropic.stream.error", { modelId, error: e instanceof Error ? e.message : String(e) });
 			throw e;
 		} finally {
+			cancelDisposable?.dispose();
 			reader.releaseLock();
 			this.reportEndThinking(progress);
 		}
