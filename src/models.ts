@@ -59,8 +59,9 @@ const BUILT_IN_MODELS: BuiltInModelDef[] = [
     { baseId: "mimo-v2.5-pro", displayName: "MiMo-V2.5-Pro", vision: false, thinkingMode: "switchable", contextLength: 1000000, maxTokens: 32768 },
     { baseId: "mimo-v2.5", displayName: "MiMo-V2.5", vision: false, thinkingMode: "switchable", contextLength: 1000000, maxTokens: 32768 },
 
-    // ── MiniMax series ── 官方文档: 204800 context (204.8K) ──
-    // Note: minimax-m2.7 uses Anthropic API format (messages endpoint)
+    // ── MiniMax series ── 官方文档: M2.7/M2.5 204800 context (204.8K), M3 1M context ──
+    // Note: minimax-m2.7 and minimax-m3 use Anthropic API format (messages endpoint)
+    { baseId: "minimax-m3", displayName: "MiniMax M3", vision: false, thinkingMode: "always", apiMode: "anthropic", extra: { reasoning_split: true }, contextLength: 1000000, maxTokens: 32768 },
     { baseId: "minimax-m2.7", displayName: "MiniMax M2.7", vision: false, thinkingMode: "always", apiMode: "anthropic", extra: { reasoning_split: true }, contextLength: 204800, maxTokens: 32768 },
     { baseId: "minimax-m2.5", displayName: "MiniMax M2.5", vision: false, thinkingMode: "always", contextLength: 204800, maxTokens: 32768 },
 
