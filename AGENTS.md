@@ -71,7 +71,7 @@
 |--------|---------|------|----------------|----------|------|
 | Zen/Big Pickle Free | `big-pickle` | ❌ | `思考`（不支持思考切换） | OpenAI | 限时免费 |
 | Zen/DeepSeek V4 Flash Free | `deepseek-v4-flash-free` | ❌ | `禁用思考` / `高` / `极高` | OpenAI | 限时免费 |
-| Zen/MiniMax M3 Free | `minimax-m3-free` | ✅ | `禁用思考` / `自适应` | OpenAI | 限时免费；1M 上下文，仅支持 `adaptive` / `disabled` 思考模式 |
+| Zen/MiniMax M3 Free | `minimax-m3-free` | ✅ | `禁用思考` / `自适应` | Anthropic | 限时免费；1M 上下文，仅支持 `adaptive` / `disabled` 思考模式 |
 | Zen/MiniMax M2.5 Free | `minimax-m2.5-free` | ❌ | `禁用思考` / `思考` | OpenAI | 限时免费 |
 | Zen/Ring 2.6 1T Free | `ring-2.6-1t-free` | ❌ | `禁用思考` / `思考` | OpenAI | 限时免费 |
 | Zen/Nemotron 3 Super Free | `nemotron-3-super-free` | ❌ | `禁用思考` / `思考` | OpenAI | 限时免费 |
@@ -1074,7 +1074,7 @@ Anthropic 请求体。包含 `model`, `messages`, `max_tokens`, `system`, `strea
 5 个硬编码的 Zen 免费模型 ID 数组：`big-pickle`、`deepseek-v4-flash-free`、`minimax-m2.5-free`、`ring-2.6-1t-free`、`nemotron-3-super-free`。
 
 #### `const ZEN_FREE_MODEL_METADATA`
-免费模型元数据映射，包含 `displayName`、`contextLength`、`vision`、`maxTokens` 字段。
+免费模型元数据映射，包含 `displayName`、`contextLength`、`vision`、`maxTokens`、`apiMode` 字段。
 
 #### `const ZEN_BASE_URL`
 Zen API 基础 URL：`https://opencode.ai/zen/v1/`。
@@ -1103,7 +1103,7 @@ Zen API 基础 URL：`https://opencode.ai/zen/v1/`。
 5. 无 API Key → 使用过期缓存或全量硬编码列表
 
 #### `function getZenFreeModelConfig(modelId): OpenCodeGoModelItem | undefined`
-按模型 ID 查找 Zen 免费模型配置。返回 `baseUrl: "https://opencode.ai/zen/v1/"`、`apiMode: "openai"`、`thinkingMode: "switchable"` 的模型配置对象。内置模型找不到时由 `provider.ts` 作为回退调用。
+按模型 ID 查找 Zen 免费模型配置。返回 `baseUrl: "https://opencode.ai/zen/v1/"`、`apiMode`（根据元数据，默认为 `"openai"`，`minimax-m3-free` 使用 `"anthropic"`）、`thinkingMode` 的模型配置对象。内置模型找不到时由 `provider.ts` 作为回退调用。
 
 ---
 
