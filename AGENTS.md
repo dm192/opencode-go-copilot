@@ -79,7 +79,7 @@
 
 > 所有模型在模型选择器中均显示**一个条目**，通过**推理强度选择器**（中文标签）切换思考模式。  
 > 所有模型在模型选择器中均显示**一个条目**，通过**推理强度选择器**（中文标签）切换思考模式。  
-> - `thinkingMode="switchable"`：用户可选择`禁用思考`或`自动`（或特定强度档位），由模型自动决定是否启用思考  
+> - `thinkingMode="switchable"`：用户可选择`禁用思考`、`自动`或启用思考（强度可配置）  
 > - `thinkingMode="adaptive"`：仅`禁用思考`和`自动`两档选择，无强制启用思考选项  
 > - `thinkingMode="always"`：推理始终启用，选择器中不显示`禁用思考`选项（模型特性）  
 > - `thinkingMode="always"`：推理始终启用，选择器中不显示`禁用思考`选项（模型特性）  
@@ -496,7 +496,7 @@ src/
 16 个内置模型定义常量数组。
 
 #### `getBuiltInModelInfos(): LanguageModelChatInformation[]`
-将内置模型定义转换为 VS Code 的模型信息列表。每个模型注册**一个条目**，带 `isUserSelectable: true` 确保在模型选择器中可见（VS Code 1.120+ 要求），并通过 `configurationSchema` 附加推理强度选择器（中文标签）。switchable 模型显示 `禁用思考/自动` 或 `禁用思考/自动/高/最大`（可关闭推理）；adaptive 模型仅显示 `禁用思考/自动`；always 模型不显示 `禁用思考` 选项，仅在支持推理强度时显示强度选项。
+将内置模型定义转换为 VS Code 的模型信息列表。每个模型注册**一个条目**，带 `isUserSelectable: true` 确保在模型选择器中可见（VS Code 1.120+ 要求），并通过 `configurationSchema` 附加推理强度选择器（中文标签）。switchable 模型显示 `禁用思考/自动/思考` 或 `禁用思考/自动/高/最大`（可关闭推理）；adaptive 模型仅显示 `禁用思考/自动`；always 模型不显示 `禁用思考` 选项，仅在支持推理强度时显示强度选项。
 
 #### `getBuiltInModelCount(): number`
 返回内置模型定义总数（BUILT_IN_MODELS.length）。

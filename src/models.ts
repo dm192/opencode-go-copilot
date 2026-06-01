@@ -105,7 +105,7 @@ export function getBuiltInModelInfos(): LanguageModelChatInformation[] {
 
         // Build enum values based on thinking mode
         // - "switchable" + hasEfforts: disabled / adaptive / [effort levels]   (e.g. disabled/adaptive/high/max)
-        // - "switchable" + no efforts: disabled / adaptive
+        // - "switchable" + no efforts: disabled / adaptive / enabled
         // - "adaptive"               : disabled / adaptive                    (only two: off or auto-decide)
         // - "always"    + hasEfforts: [effort levels]
         // - "always"    + no efforts: enabled
@@ -119,7 +119,7 @@ export function getBuiltInModelInfos(): LanguageModelChatInformation[] {
             }
         } else {
             if (def.thinkingMode === "switchable") {
-                enumValues = ["disabled", "adaptive"];
+                enumValues = ["disabled", "adaptive", "enabled"];
             } else if (def.thinkingMode === "adaptive") {
                 enumValues = ["disabled", "adaptive"];
             } else {
