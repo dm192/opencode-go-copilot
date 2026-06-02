@@ -326,6 +326,10 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
                     if (!res.ok) {
                         const errorText = await res.text();
                         console.error("[Anthropic Provider] Anthropic API error response", errorText);
+                        // Detect content moderation rejection for images — skip retries, this won't recover
+                        if (errorText.includes("image is sensitive")) {
+                            throw new Error(`IMAGE_SENSITIVE: ${errorText}`);
+                        }
                         throw new Error(
                             `Anthropic API error: [${res.status}] ${res.statusText}${errorText ? `\n${errorText}` : ""}\nURL: ${url}`
                         );
@@ -399,6 +403,10 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
                     if (!res.ok) {
                         const errorText = await res.text();
                         console.error("[OpenCodeGo] API error response", errorText);
+                        // Detect content moderation rejection for images — skip retries, this won't recover
+                        if (errorText.includes("image is sensitive")) {
+                            throw new Error(`IMAGE_SENSITIVE: ${errorText}`);
+                        }
                         throw new Error(
                             `API error: [${res.status}] ${res.statusText}${errorText ? `\n${errorText}` : ""}\nURL: ${url}`
                         );
@@ -492,6 +500,16 @@ export class OpenCodeGoChatModelProvider implements LanguageModelChatProvider {
                     errorMessage: errMessage,
                 });
                 throw new Error(l10nFormat("{0} is no longer available as a free model. Please use a different model.", zenModelName));
+            }
+
+            // Detect image content moderation rejection from the API
+            if (errMessage.includes("IMAGE_SENSITIVE:")) {
+                logger.error("request.error", {
+                    modelId: model.id,
+                    error: "image_sensitive",
+                    errorMessage: errMessage,
+                });
+                throw new Error(l10n("The image you sent was flagged as sensitive by the content moderation system. Please try a different image."));
             }
 
             console.error("[OpenCodeGo] Chat request failed", {
